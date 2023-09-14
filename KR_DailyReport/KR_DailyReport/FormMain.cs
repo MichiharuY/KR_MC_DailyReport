@@ -47,7 +47,6 @@ namespace KR_DailyReport
 
             m_Excel[0] = new ExcelInfo();
             m_Excel[1] = new ExcelInfo();
-
         }
 
         /// <summary>
@@ -82,7 +81,6 @@ namespace KR_DailyReport
             this.StartPosition = FormStartPosition.CenterScreen;
 
 #if false
-
             ////////////////////////////////////////
             // NET10通信の初期化
             m_NET10Ctrl = new NET10Control();
@@ -100,15 +98,6 @@ namespace KR_DailyReport
             dgvDailyData.Columns[1].HeaderText = "値";
 
             dtpDate.Value = DateTime.Now;
-        }
-
-        /// <summary>
-        /// フォームアクティブ
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void FormMain_Activated(object sender, EventArgs e)
-        {
         }
 
         /// <summary>
@@ -145,7 +134,13 @@ namespace KR_DailyReport
         /// <param name="e"></param>
         private void btnExcelOutput_Click(object sender, EventArgs e)
         {
-            if (MessageBox.Show("Excelへ日報を出力します。よろしいですか？", "日報出力", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+            if (dgvDailyData.Rows .Count == 0)
+            {
+                MessageBox.Show("データが抽出されていません", "データ未選択", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (MessageBox.Show("Excelへ日報を出力します。よろしいですか？\n" + "(保存先：" + m_SavePath + ")", "日報出力", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
             {
 
                 var data = new ArrayList();
@@ -163,9 +158,9 @@ namespace KR_DailyReport
                     }
                 }
 
-                //MakeSavePath();
-
                 ExcelWrite(m_SavePath, 1, 3, 4, data, dtpDate.Value.ToString());
+
+                MessageBox.Show("日報出力が完了しました。", "完了確認", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
         }
 
@@ -335,14 +330,21 @@ namespace KR_DailyReport
         /// <returns>実行結果</returns>
         public bool ExcelWrite(string filePath, int sheetIndex, int row, int colmn, ArrayList data, string date)
         {
+            this.Cursor = Cursors.WaitCursor;
+
             lblStatus.Text = "Excelファイルへ保存中...";
 
             // テンプレートをコピー
-            if(!File.Exists(filePath)) {
+            if (!File.Exists(filePath))
+            {
                 Directory.CreateDirectory(filePath);
             }
 
-            string SaveFilePath = filePath + DateTime.Now.ToString("日報yyyyMMdd_HHmmss") + ".xlsx";
+            // データ取得年月日
+            string strTime = dtpDate.Value.Date.ToString().Substring(0,11) + cmbStartTimeStamp.SelectedItem.ToString(); ;
+            DateTime dTime = DateTime.Parse(strTime);
+
+            string SaveFilePath = filePath + dTime.ToString("日報yyyyMMdd_HHmmss") + ".xlsx";
             File.Copy(AppDomain.CurrentDomain.BaseDirectory + @"Template\" + m_TemplateName, SaveFilePath);
 
             // ワークブックを開く
@@ -353,7 +355,7 @@ namespace KR_DailyReport
                 xlWorksheet = xlWorkbook.Sheets[sheetIndex];
                 xlWorksheet.Select();
 
-                xlWorksheet.Cells[1, 4] = date.Substring(0,10) + "(1/1)";     // 日付
+                xlWorksheet.Cells[1, 4] = date.Substring(0, 10) + "(1/1)";     // 日付
 
                 // データ
                 xlWorksheet.Cells[row, colmn] = data[data.Count - 2];
@@ -376,6 +378,8 @@ namespace KR_DailyReport
             ExcelClose();
 
             lblStatus.Text = "";
+
+            this.Cursor = Cursors.Default;
 
             return true;
         }
@@ -473,6 +477,7 @@ namespace KR_DailyReport
                 var strList = new List<string>();
 
                 cmbStartTimeStamp.Items.Clear();
+                cmbStartTimeStamp.Text = "";
                 string st_date = dtpDate.Value.Year + "-" + dtpDate.Value.Month + "-" + dtpDate.Value.Day + " 00:00:00";
                 string ed_date = dtpDate.Value.Year + "-" + dtpDate.Value.Month + "-" + dtpDate.Value.Day + " 23:59:59";
                 string sqlstr = "SELECT 開始時刻 FROM JOB WHERE 開始時刻 BETWEEN '" + st_date + "' AND '" + ed_date + "'";
@@ -509,6 +514,18 @@ namespace KR_DailyReport
         /// <param name="e"></param>
         private void btnGetData_Click(object sender, EventArgs e)
         {
+            if (dtpDate.Text.ToString() == "")
+            {
+                MessageBox.Show("日付が入力されていません", "入力エラー", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (cmbStartTimeStamp.SelectedItem == null || cmbStartTimeStamp.SelectedItem.ToString() == "")
+            {
+                MessageBox.Show("開始時刻が選択されていません", "入力エラー", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
             SqlConnection con = new SqlConnection(CONNECT_STRING);
             con.Open();
 

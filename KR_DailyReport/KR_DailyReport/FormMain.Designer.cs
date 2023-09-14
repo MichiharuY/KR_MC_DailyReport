@@ -130,7 +130,7 @@
             groupBox1.Controls.Add(btnGetData);
             groupBox1.Location = new Point(21, 16);
             groupBox1.Name = "groupBox1";
-            groupBox1.Size = new Size(484, 88);
+            groupBox1.Size = new Size(480, 88);
             groupBox1.TabIndex = 11;
             groupBox1.TabStop = false;
             groupBox1.Text = "抽出条件";
@@ -139,14 +139,14 @@
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(525, 781);
+            ClientSize = new Size(523, 781);
             Controls.Add(groupBox1);
             Controls.Add(dgvDailyData);
             Controls.Add(lblStatus);
+            FormBorderStyle = FormBorderStyle.FixedSingle;
             Margin = new Padding(2);
             Name = "FormMain";
             Text = "日報出力";
-            Activated += FormMain_Activated;
             FormClosing += FormMain_FormClosing;
             Load += FormMain_Load;
             ((System.ComponentModel.ISupportInitialize)dgvDailyData).EndInit();
